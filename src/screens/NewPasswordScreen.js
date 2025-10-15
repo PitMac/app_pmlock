@@ -44,9 +44,7 @@ export default function PasswordFormScreen() {
     }
   };
 
-  const providerObj = PROVIDERS.find((p) => p.id === provider);
-  console.log(PROVIDERS);
-  console.log(provider);
+  const providerObj = PROVIDERS.find((p) => p.value === provider);
 
   return (
     <View style={{ flex: 1 }}>
@@ -100,7 +98,7 @@ export default function PasswordFormScreen() {
               mode="outlined"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!showPassword}
               style={styles.input}
               right={
                 <TextInput.Icon
