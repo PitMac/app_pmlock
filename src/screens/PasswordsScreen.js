@@ -1,12 +1,24 @@
 import React from "react";
-import { FlatList, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import { List, FAB } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import CustomAppBar from "../components/CustomAppBar"; // lo defines en /data/mockPasswords.js
 import { MOCK_PASSWORDS } from "../utils/passwords";
+import { PROVIDERS } from "../utils/providers";
+import { Image } from "expo-image";
 
 export default function PasswordsScreen() {
   const navigation = useNavigation();
+
+  const renderLeftIcon = (provider_id) => {
+    const provider = PROVIDERS.find((p) => p.value === provider_id);
+
+    if (provider?.logo) {
+      return <Image source={provider.logo} style={styles.logo} />;
+    }
+
+    return <List.Icon icon="lock-outline" />;
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -23,10 +35,13 @@ export default function PasswordsScreen() {
               item.provider_id.slice(1)
             }
             description={item.username}
-            left={(props) => <List.Icon {...props} icon="lock-outline" />}
+            left={() => renderLeftIcon(item.provider_id)}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() =>
-              navigation.navigate("Password", { passwordData: item })
+              navigation.navigate("NewPassword", {
+                mode: "edit",
+                passwordData: item,
+              })
             }
           />
         )}
@@ -35,7 +50,7 @@ export default function PasswordsScreen() {
       <FAB
         icon="plus"
         label="Añadir"
-        onPress={() => navigation.navigate("NewPassword")}
+        onPress={() => navigation.navigate("NewPassword", { mode: "create" })}
         style={{
           position: "absolute",
           bottom: 20,
@@ -45,3 +60,12 @@ export default function PasswordsScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  logo: {
+    width: 40,
+    height: 40,
+    marginLeft: 10,
+    borderRadius: 5,
+  },
+});

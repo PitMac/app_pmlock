@@ -9,11 +9,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { TextInput, Button, List } from "react-native-paper";
+import { TextInput, Button, List, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CustomPicker = (props) => {
   const { items, onValueChange, dropdownIconColor, text } = props;
+  const theme = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
 
   const [searchText, setSearchText] = useState("");
@@ -31,6 +32,8 @@ const CustomPicker = (props) => {
   }, [searchText, items]);
 
   const handleValueChange = (itemValue, itemIndex) => {
+    console.log(itemValue, itemIndex);
+
     onValueChange(itemValue, itemIndex);
     setModalVisible(false);
   };
@@ -38,7 +41,7 @@ const CustomPicker = (props) => {
   return (
     <View>
       <TouchableOpacity
-        style={styles.pickerButton}
+        style={[{ borderColor: theme.colors.primary }, styles.pickerButton]}
         onPress={() => setModalVisible(true)}
       >
         <Ionicons
@@ -113,7 +116,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 5,
     borderWidth: 1,
-    borderColor: "#d5a203",
     borderRadius: 5,
     marginVertical: 5,
   },
