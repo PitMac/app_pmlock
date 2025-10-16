@@ -78,7 +78,12 @@ const CustomPicker = (props) => {
               <Ionicons name="close-sharp" size={35} color={"white"} />
             </Button>
           </View>
-          <View style={styles.modalContainer}>
+          <View
+            style={[
+              { backgroundColor: theme.colors.background },
+              styles.modalContainer,
+            ]}
+          >
             <TextInput
               label={"Buscar..."}
               mode={"outlined"}
@@ -124,7 +129,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "center",
   },
   modalContainer: {
@@ -132,7 +137,6 @@ const styles = StyleSheet.create({
     maxHeight: "60%",
     marginHorizontal: 20,
     marginBottom: 50,
-    backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
     shadowColor: "#000",

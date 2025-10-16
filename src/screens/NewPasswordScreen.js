@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, StyleSheet, Image } from "react-native";
-import { TextInput, Button, Card, Text } from "react-native-paper";
+import { View, ScrollView, StyleSheet, Image, Alert } from "react-native";
+import { TextInput, Button, Card, Text, useTheme } from "react-native-paper";
 import CustomPicker from "../components/CustomPicker";
 import CustomAppBar from "../components/CustomAppBar";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { PROVIDERS } from "../utils/providers";
 import * as LocalAuthentication from "expo-local-authentication";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function PasswordFormScreen() {
   const navigation = useNavigation();
@@ -18,13 +19,83 @@ export default function PasswordFormScreen() {
   const [password, setPassword] = useState(passwordData?.password || "");
   const [note, setNote] = useState(passwordData?.note || "");
   const [showPassword, setShowPassword] = useState(false);
+  const theme = useTheme();
 
-  const handleSave = () => {
-    if (mode === "create") {
-      console.log("Crear:", { provider, username, password, note });
-    } else {
-      console.log("Editar:", { provider, username, password, note });
+  const handleSave = async () => {
+    if (!provider || !username || !password) {
+      Alert.alert("Error", "Completa todos los campos.");
+      return;
     }
+
+    try {
+      const stored = await AsyncStorage.getItem("passwords");
+      const currentPasswords = stored ? JSON.parse(stored) : [];
+
+      if (mode === "create") {
+        const newPassword = {
+          id: Date.now().toString(),
+          provider_id: provider,
+          username,
+          password,
+          note,
+          created_at: new Date().toISOString(),
+        };
+        currentPasswords.push(newPassword);
+        await AsyncStorage.setItem(
+          "passwords",
+          JSON.stringify(currentPasswords)
+        );
+        Alert.alert("¡Guardado!", "Contraseña creada correctamente.");
+      } else {
+        // Editar
+        const updatedPasswords = currentPasswords.map((p) =>
+          p.id === passwordData.id
+            ? { ...p, provider_id: provider, username, password, note }
+            : p
+        );
+        await AsyncStorage.setItem(
+          "passwords",
+          JSON.stringify(updatedPasswords)
+        );
+        Alert.alert("¡Guardado!", "Contraseña actualizada correctamente.");
+      }
+
+      navigation.goBack();
+    } catch (e) {
+      console.log("Error guardando contraseña:", e);
+      Alert.alert("Error", "No se pudo guardar la contraseña.");
+    }
+  };
+
+  const handleDelete = async () => {
+    Alert.alert(
+      "Eliminar contraseña",
+      "¿Estás seguro que deseas eliminar esta contraseña?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const stored = await AsyncStorage.getItem("passwords");
+              const currentPasswords = stored ? JSON.parse(stored) : [];
+
+              const filtered = currentPasswords.filter(
+                (p) => p.id !== passwordData.id
+              );
+
+              await AsyncStorage.setItem("passwords", JSON.stringify(filtered));
+              Alert.alert("Eliminado", "Contraseña eliminada correctamente.");
+              navigation.goBack();
+            } catch (e) {
+              console.log("Error eliminando contraseña:", e);
+              Alert.alert("Error", "No se pudo eliminar la contraseña.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleShowPassword = async () => {
@@ -52,6 +123,16 @@ export default function PasswordFormScreen() {
         showBackButton
         onBackPress={() => navigation.goBack()}
         title={mode === "create" ? "Nueva Contraseña" : "Editar Contraseña"}
+        actions={
+          mode === "edit"
+            ? [
+                {
+                  icon: "delete", // icono del botón
+                  onPress: handleDelete,
+                },
+              ]
+            : []
+        }
       />
       <ScrollView
         style={styles.container}
@@ -63,7 +144,7 @@ export default function PasswordFormScreen() {
               <CustomPicker
                 items={PROVIDERS}
                 onValueChange={setProvider}
-                dropdownIconColor="#000"
+                dropdownIconColor={theme.colors.onBackground}
                 text={
                   provider
                     ? PROVIDERS.find((p) => p.value === provider)?.label

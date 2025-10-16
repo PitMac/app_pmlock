@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { List, FAB } from "react-native-paper";
+import { List, FAB, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import CustomAppBar from "../components/CustomAppBar"; // lo defines en /data/mockPasswords.js
 import { MOCK_PASSWORDS } from "../utils/passwords";
 import { PROVIDERS } from "../utils/providers";
 import { Image } from "expo-image";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function PasswordsScreen() {
   const navigation = useNavigation();
+  const [passwords, setPasswords] = useState([]);
+  const theme = useTheme();
 
   const renderLeftIcon = (provider_id) => {
     const provider = PROVIDERS.find((p) => p.value === provider_id);
@@ -20,12 +23,31 @@ export default function PasswordsScreen() {
     return <List.Icon icon="lock-outline" />;
   };
 
+  const loadPasswords = async () => {
+    try {
+      const stored = await AsyncStorage.getItem("passwords");
+      if (stored) setPasswords(JSON.parse(stored));
+    } catch (e) {
+      console.log("Error cargando passwords:", e);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", loadPasswords);
+    loadPasswords();
+    return unsubscribe;
+  }, [navigation]);
+
   return (
     <View style={{ flex: 1 }}>
-      <CustomAppBar title="Contraseñas" />
+      <CustomAppBar
+        title="Contraseñas"
+        showBackButton={true}
+        onBackPress={() => navigation.goBack()}
+      />
 
       <FlatList
-        data={MOCK_PASSWORDS}
+        data={passwords}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: 4 }}
         renderItem={({ item }) => (
@@ -44,6 +66,24 @@ export default function PasswordsScreen() {
               })
             }
           />
+        )}
+        ListEmptyComponent={() => (
+          <View
+            style={{
+              alignItems: "center",
+              marginTop: 50,
+              marginHorizontal: 20,
+              padding: 20,
+              paddingVertical: 30,
+              borderRadius: 12,
+              backgroundColor: theme.colors.surface,
+            }}
+          >
+            <Text style={{ fontSize: 16, textAlign: "center" }}>
+              No tienes contraseñas guardadas {"\n"}¡Agrega tu primera
+              contraseña!
+            </Text>
+          </View>
         )}
       />
 
