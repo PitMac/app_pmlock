@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+import { Card, Text, useTheme } from "react-native-paper";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useNavigation } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
@@ -10,6 +10,7 @@ import { MOCK_PASSWORDS } from "../utils/passwords";
 import GlobalIcon from "../components/GlobalIcon";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 
 export default function HomeScreen() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -78,58 +79,67 @@ export default function HomeScreen() {
     {
       title: "Mis contraseñas",
       subtitle: `${passwordCount} guardadas`,
-      icon: { family: "fa5", name: "lock" }, // FontAwesome5
-      color: "#4CAF50",
+      icon: { family: "fa5", name: "lock" },
+      color: theme.colors.primary,
       screen: "Passwords",
     },
     {
       title: "Generar",
       subtitle: "Crea contraseñas seguras",
-      icon: { family: "materialC", name: "key-plus" }, // MaterialCommunityIcons
-      color: "#2196F3",
+      icon: { family: "materialC", name: "key-plus" },
+      color: theme.colors.secondary,
       screen: "Generate",
     },
   ];
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <CustomAppBar title="Inicio" />
+      <CustomAppBar title="PMLock" />
 
       {isAuthenticated ? (
         <View style={styles.container}>
-          {menuItems.map((item, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={styles.cardWrapper}
-              onPress={() => navigation.navigate(item.screen)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.card, { borderLeftColor: item.color }]}>
-                {/* Icono con fondo redondeado */}
-                <View
-                  style={{
-                    backgroundColor: item.color,
-                    width: 50,
-                    height: 50,
-                    borderRadius: 25,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <GlobalIcon
-                    family={item.icon.family}
-                    name={item.icon.name}
-                    size={24}
-                    color="#fff"
-                  />
-                </View>
+          <View
+            style={{ margin: 20, backgroundColor: "#1E1E1E", borderRadius: 25 }}
+          >
+            <Image
+              source={require("../../assets/largeicon.png")}
+              style={styles.logo}
+            />
+          </View>
+          <View style={styles.containerCards}>
+            {menuItems.map((item, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.cardWrapper}
+                onPress={() => navigation.navigate(item.screen)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.card, { borderLeftColor: item.color }]}>
+                  <View
+                    style={{
+                      backgroundColor: item.color,
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginBottom: 10,
+                    }}
+                  >
+                    <GlobalIcon
+                      family={item.icon.family}
+                      name={item.icon.name}
+                      size={24}
+                      color="#fff"
+                    />
+                  </View>
 
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.subtitle}>{item.subtitle}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                  <Text style={styles.title}>{item.title}</Text>
+                  <Text style={styles.subtitle}>{item.subtitle}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       ) : (
         <BlurView intensity={90} tint="dark" style={styles.blurContainer}>
@@ -145,11 +155,12 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: {},
+  containerCards: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    paddingVertical: 30,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     gap: 20,
   },
@@ -189,5 +200,10 @@ const styles = StyleSheet.create({
   text: {
     color: "#fff",
     fontSize: 16,
+  },
+  logo: {
+    width: 250,
+    height: 250,
+    alignSelf: "center",
   },
 });

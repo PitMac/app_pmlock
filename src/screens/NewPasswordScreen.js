@@ -7,6 +7,8 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { PROVIDERS } from "../utils/providers";
 import * as LocalAuthentication from "expo-local-authentication";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomAlert, { showAlert } from "../components/CustomAlert";
+import GlobalIcon from "../components/GlobalIcon";
 
 export default function PasswordFormScreen() {
   const navigation = useNavigation();
@@ -15,11 +17,38 @@ export default function PasswordFormScreen() {
   const { mode = "create", passwordData = null } = route.params || {};
 
   const [provider, setProvider] = useState(passwordData?.provider_id || null);
+  const [customProviderName, setCustomProviderName] = useState(
+    passwordData?.custom_provider_name || ""
+  );
   const [username, setUsername] = useState(passwordData?.username || "");
   const [password, setPassword] = useState(passwordData?.password || "");
   const [note, setNote] = useState(passwordData?.note || "");
   const [showPassword, setShowPassword] = useState(false);
   const theme = useTheme();
+
+  const renderLeftIcon = () => {
+    const selectedProvider = PROVIDERS.find((p) => p.value === provider);
+
+    if (selectedProvider?.logo) {
+      return (
+        <Image
+          style={{
+            width: 100,
+            height: 100,
+            alignSelf: "center",
+            borderRadius: 20,
+          }}
+          source={selectedProvider.logo}
+        />
+      );
+    }
+
+    return (
+      <View style={{ alignItems: "center" }}>
+        <GlobalIcon color="white" family="fa5" name="lock" size={100} />
+      </View>
+    );
+  };
 
   const handleSave = async () => {
     if (!provider || !username || !password) {
@@ -34,6 +63,7 @@ export default function PasswordFormScreen() {
       if (mode === "create") {
         const newPassword = {
           id: Date.now().toString(),
+          custom_provider_name: provider === "otro" ? customProviderName : null,
           provider_id: provider,
           username,
           password,
@@ -45,37 +75,51 @@ export default function PasswordFormScreen() {
           "passwords",
           JSON.stringify(currentPasswords)
         );
-        Alert.alert("¡Guardado!", "Contraseña creada correctamente.");
+        showAlert({
+          title: "¡Guardado!",
+          message: "Contraseña creada correctamente.",
+        });
       } else {
-        // Editar
         const updatedPasswords = currentPasswords.map((p) =>
           p.id === passwordData.id
-            ? { ...p, provider_id: provider, username, password, note }
+            ? {
+                ...p,
+                provider_id: provider,
+                username,
+                password,
+                note,
+                custom_provider_name:
+                  provider === "otro" ? customProviderName : null,
+              }
             : p
         );
         await AsyncStorage.setItem(
           "passwords",
           JSON.stringify(updatedPasswords)
         );
-        Alert.alert("¡Guardado!", "Contraseña actualizada correctamente.");
+        showAlert({
+          title: "¡Guardado!",
+          message: "Contraseña actualizada correctamente.",
+        });
       }
 
       navigation.goBack();
     } catch (e) {
-      console.log("Error guardando contraseña:", e);
-      Alert.alert("Error", "No se pudo guardar la contraseña.");
+      showAlert({
+        title: "Error",
+        message: "No se pudo guardar la contraseña.",
+      });
     }
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      "Eliminar contraseña",
-      "¿Estás seguro que deseas eliminar esta contraseña?",
-      [
-        { text: "Cancelar", style: "cancel" },
+    showAlert({
+      title: "Eliminar contraseña",
+      message: "¿Estás seguro que deseas eliminar esta contraseña?",
+      actions: [
+        { label: "Cancelar", onPress: () => {} },
         {
-          text: "Eliminar",
-          style: "destructive",
+          label: "Eliminar",
           onPress: async () => {
             try {
               const stored = await AsyncStorage.getItem("passwords");
@@ -84,18 +128,31 @@ export default function PasswordFormScreen() {
               const filtered = currentPasswords.filter(
                 (p) => p.id !== passwordData.id
               );
+              const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: "Autenticación requerida",
+              });
 
-              await AsyncStorage.setItem("passwords", JSON.stringify(filtered));
-              Alert.alert("Eliminado", "Contraseña eliminada correctamente.");
+              if (result.success)
+                await AsyncStorage.setItem(
+                  "passwords",
+                  JSON.stringify(filtered)
+                );
+              showAlert({
+                title: "Eliminado",
+                message: "Contraseña eliminada correctamente.",
+              });
               navigation.goBack();
             } catch (e) {
               console.log("Error eliminando contraseña:", e);
-              Alert.alert("Error", "No se pudo eliminar la contraseña.");
+              showAlert({
+                title: "Error",
+                message: "No se pudo eliminar la contraseña.",
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const handleShowPassword = async () => {
@@ -103,11 +160,14 @@ export default function PasswordFormScreen() {
       setShowPassword(false);
       return;
     }
+    if (mode === "create") {
+      setShowPassword(true);
+      return;
+    }
     try {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: "Autenticación requerida",
       });
-      console.log(result);
 
       if (result.success) setShowPassword((prev) => !prev);
     } catch (e) {
@@ -127,7 +187,7 @@ export default function PasswordFormScreen() {
           mode === "edit"
             ? [
                 {
-                  icon: "delete", // icono del botón
+                  icon: "delete",
                   onPress: handleDelete,
                 },
               ]
@@ -138,9 +198,10 @@ export default function PasswordFormScreen() {
         style={styles.container}
         contentContainerStyle={styles.content}
       >
-        <Card style={styles.card}>
+        <Card style={[{ backgroundColor: theme.colors.surface }, styles.card]}>
+          <View style={{ marginVertical: 10 }}>{renderLeftIcon()}</View>
           <Card.Content>
-            {mode === "create" ? (
+            <View>
               <CustomPicker
                 items={PROVIDERS}
                 onValueChange={setProvider}
@@ -151,20 +212,17 @@ export default function PasswordFormScreen() {
                     : "SELECCIONE UN PROVEEDOR"
                 }
               />
-            ) : (
-              providerObj && (
-                <View style={styles.providerContainer}>
-                  {providerObj.logo && (
-                    <Image
-                      source={providerObj.logo}
-                      style={styles.providerLogo}
-                      resizeMode="contain"
-                    />
-                  )}
-                  <Text style={styles.providerLabel}>{providerObj.label}</Text>
-                </View>
-              )
-            )}
+              {provider === "otro" && (
+                <TextInput
+                  label="Nombre del proveedor"
+                  mode="outlined"
+                  value={customProviderName}
+                  onChangeText={setCustomProviderName}
+                  style={styles.input}
+                  placeholder="Otro"
+                />
+              )}
+            </View>
 
             <TextInput
               label="Usuario"
@@ -231,17 +289,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   providerContainer: {
-    flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
   },
   providerLogo: {
-    width: 40,
-    height: 40,
+    width: 120,
+    height: 120,
+    borderRadius: 10,
     marginRight: 10,
   },
   providerLabel: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 20,
+    marginTop: 7,
+    fontWeight: "bold",
   },
 });

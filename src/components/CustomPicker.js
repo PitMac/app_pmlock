@@ -80,7 +80,7 @@ const CustomPicker = (props) => {
           </View>
           <View
             style={[
-              { backgroundColor: theme.colors.background },
+              { backgroundColor: theme.colors.surface },
               styles.modalContainer,
             ]}
           >

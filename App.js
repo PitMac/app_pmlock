@@ -1,8 +1,9 @@
 import { NavigationContainer } from "@react-navigation/native";
 import RootStack from "./src/navigation/StackNavigation";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
-import { useColorScheme } from "react-native";
+import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import CustomAlert from "./src/components/CustomAlert";
 
 const CombinedDefaultTheme = {
   ...MD3LightTheme,
@@ -17,25 +18,26 @@ const CombinedDarkTheme = {
   ...MD3DarkTheme,
   colors: {
     ...MD3DarkTheme.colors,
-    primary: "#BB86FC",
-    secondary: "#03DAC6",
+    primary: "#16476A",
+    onPrimary: "#fff",
+    secondary: "#3B9797",
     background: "#121212",
     surface: "#1E1E1E",
   },
 };
 
 export default function App() {
-  const colorScheme = useColorScheme();
-  console.log(colorScheme);
-
   const theme = CombinedDarkTheme;
 
   return (
     <PaperProvider theme={theme}>
-      <StatusBar style="light" />
-      <NavigationContainer theme={theme}>
-        <RootStack />
-      </NavigationContainer>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <StatusBar style="light" />
+        <CustomAlert />
+        <NavigationContainer theme={theme}>
+          <RootStack />
+        </NavigationContainer>
+      </View>
     </PaperProvider>
   );
 }

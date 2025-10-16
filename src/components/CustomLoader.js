@@ -8,7 +8,13 @@ export default function CustomLoader({ loading, modalStyle, indicatorStyle }) {
     <Portal>
       <Modal visible={loading}>
         <View style={[styles.modalBackground, modalStyle]}>
-          <View style={[styles.activityIndicatorWrapper, indicatorStyle]}>
+          <View
+            style={[
+              { backgroundColor: theme.colors.surface },
+              styles.activityIndicatorWrapper,
+              indicatorStyle,
+            ]}
+          >
             <PacmanIndicator color={theme.colors.primary} size={70} />
           </View>
         </View>
@@ -33,6 +39,5 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
   },
 });
